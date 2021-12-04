@@ -1,0 +1,27 @@
+{
+  "name": "erc20-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc",
+    "watch": "tsc --watch"
+  },
+  "author": "Max Bondarenko",
+  "license": "ISC",
+  "dependencies": {
+    "ts-node": "^10.4.0",
+    "web3": "^1.6.1",
+    "yargs": "^17.3.0"
+  },
+  "yargs": {
+    "parse-numbers": false
+  },
+  "devDependencies": {
+    "@types/web3": "^1.2.2",
+    "@types/yargs": "^17.0.7",
+    "@types/node": "^16.11.11",
+    "typescript": "^4.5.2"
+  }
+}
