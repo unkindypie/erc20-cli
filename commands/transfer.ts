@@ -6,19 +6,31 @@ import { ERC20TokenFactoryService } from "../services/ERC20TokenFactory";
 import { KeystoreService } from "../services/KeystoreService";
 import { WrongPasswordException } from "../exceptions/WrongPasswordException";
 
-interface BalanceOptions extends BaseOptions {}
+interface TransferOptions extends BaseOptions {
+  sum: number;
+  to: string;
+}
 
-export const command: string = "balance";
-export const desc: string = "Get balance of your account";
+export const command: string = "transfer";
+export const desc: string = "Transfer <sum> from your balance to <to>";
 
-export const builder: CommandBuilder<BalanceOptions, BalanceOptions> = (
+export const builder: CommandBuilder<TransferOptions, TransferOptions> = (
   yargs
-) => yargs;
+) =>
+  yargs
+    .positional("sum", { type: "number", alias: "s", demandOption: true })
+    .options({
+      to: {
+        type: "string",
+        alias: "t",
+        demandOption: true,
+      },
+    });
 
 export const handler = async (
-  argv: Arguments<BalanceOptions>
+  argv: Arguments<TransferOptions>
 ): Promise<void> => {
-  const { contract, keystore, password } = argv;
+  const { contract, keystore, password, sum, to } = argv;
 
   try {
     const keystoreService = Container.get(KeystoreService);
@@ -27,11 +39,15 @@ export const handler = async (
     const account = keystoreService.decrypt(keystore, password);
     const token = tokenFactoryService.create(contract!!, account);
 
-    const balance = await token.getOwnBalance();
+    const result = await token.transfer(to, sum);
     const symbol = await token.getSymbol();
 
-    console.log(`Symbol: ${symbol}`);
-    console.log(`Balance: ${balance} ${symbol}`);
+    if (result) {
+      console.log(`Successfully transferred ${sum} ${symbol}`);
+      return;
+    }
+
+    console.log("Transfer failed.");
   } catch (e: unknown) {
     const error = e as Error;
 

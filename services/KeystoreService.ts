@@ -1,12 +1,16 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import { Account } from "web3-core";
+import type { Account } from "web3-core";
+import { Service } from "typedi";
+
 import { WrongPasswordException } from "../exceptions/WrongPasswordException";
+import { Web3Service } from "../services/Web3Service";
 
-import { web3 } from "../web3-client";
-
+@Service()
 export class KeystoreService {
-  static decrypt(keystorePath: string, password: string): Account {
+  constructor(private readonly _web3Service: Web3Service) {}
+
+  decrypt(keystorePath: string, password: string): Account {
     let path = keystorePath;
 
     if (keystorePath[0] !== "/") {
@@ -16,7 +20,7 @@ export class KeystoreService {
     const keystoreContents = JSON.parse(readFileSync(path).toString());
 
     try {
-      const decryptedAccount = web3.eth.accounts.decrypt(
+      const decryptedAccount = this._web3Service.eth.accounts.decrypt(
         keystoreContents,
         password
       );

@@ -1,9 +1,3 @@
-import Web3 from "web3";
-
-export const web3 = new Web3(
-  new Web3.providers.HttpProvider("http://127.0.0.1:8545")
-);
-
 export const addresses = {
   MY_ETH: "0x702c1b21e12536723d4a1ce4c0f188d7e169ef06",
   SEREGA_S_ETH: "0x49d86af56676c6150d1c4d0b5290c93fb0cae34d",

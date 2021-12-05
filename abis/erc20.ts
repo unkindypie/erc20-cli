@@ -1,4 +1,4 @@
-export const awesomeTokenABI = [
+export const erc20TokenABI = [
   {
     inputs: [
       {
