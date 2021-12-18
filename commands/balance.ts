@@ -1,24 +1,39 @@
 import type { Arguments, CommandBuilder } from "yargs";
 import { Container } from "typedi";
 
-import { BaseOptions } from "../types/BaseOptions";
+import type { BaseOptions } from "../types/BaseOptions";
+import { WrongPasswordException } from "../exceptions/WrongPasswordException";
 import { ERC20TokenFactoryService } from "../services/ERC20TokenFactory";
 import { KeystoreService } from "../services/KeystoreService";
-import { WrongPasswordException } from "../exceptions/WrongPasswordException";
+import { PrintService } from "../services/PrintService";
 
-interface BalanceOptions extends BaseOptions {}
+interface BalanceOptions extends BaseOptions {
+  address?: string;
+}
 
 export const command: string = "balance";
-export const desc: string = "Get balance of your account";
+export const desc: string =
+  "Get balance of your account. If <address> is provided, it will be used instead.";
 
 export const builder: CommandBuilder<BalanceOptions, BalanceOptions> = (
   yargs
-) => yargs;
+) =>
+  yargs.options({
+    address: {
+      type: "string",
+      alias: "a",
+      demandOption: false,
+      description:
+        "Optionally you could get balance of another address." +
+        " By default, address of current account will be used.",
+    },
+  });
 
 export const handler = async (
   argv: Arguments<BalanceOptions>
 ): Promise<void> => {
-  const { contract, keystore, password } = argv;
+  const { contract, keystore, password, address } = argv;
+  const printService = Container.get(PrintService);
 
   try {
     const keystoreService = Container.get(KeystoreService);
@@ -27,18 +42,17 @@ export const handler = async (
     const account = keystoreService.decrypt(keystore, password);
     const token = tokenFactoryService.create(contract!!, account);
 
-    const balance = await token.getOwnBalance();
+    const balance = await token.getBalance(address ?? account.address);
     const symbol = await token.getSymbol();
 
-    console.log(`Symbol: ${symbol}`);
-    console.log(`Balance: ${balance} ${symbol}`);
+    printService.success(`Balance: ${balance} ${symbol}`);
   } catch (e: unknown) {
     const error = e as Error;
 
     if (error instanceof WrongPasswordException) {
-      console.log("Password verification failed");
+      printService.error("Password verification failed");
     } else if (error.message === "Contract not found") {
-      console.log("Contract not found");
+      printService.error("Contract not found");
     } else {
       throw error;
     }

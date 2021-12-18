@@ -5,6 +5,8 @@ import { BaseOptions } from "../types/BaseOptions";
 import { ERC20TokenFactoryService } from "../services/ERC20TokenFactory";
 import { KeystoreService } from "../services/KeystoreService";
 import { WrongPasswordException } from "../exceptions/WrongPasswordException";
+import { PrintService } from "../services/PrintService";
+import { Web3Service } from "../services/Web3Service";
 
 interface TransferOptions extends BaseOptions {
   sum: number;
@@ -31,6 +33,7 @@ export const handler = async (
   argv: Arguments<TransferOptions>
 ): Promise<void> => {
   const { contract, keystore, password, sum, to } = argv;
+  const printService = Container.get(PrintService);
 
   try {
     const keystoreService = Container.get(KeystoreService);
@@ -39,22 +42,18 @@ export const handler = async (
     const account = keystoreService.decrypt(keystore, password);
     const token = tokenFactoryService.create(contract!!, account);
 
-    const result = await token.transfer(to, sum);
+    await token.transfer(to, sum, account);
+
     const symbol = await token.getSymbol();
 
-    if (result) {
-      console.log(`Successfully transferred ${sum} ${symbol}`);
-      return;
-    }
-
-    console.log("Transfer failed.");
+    printService.success(`Successfully transferred ${sum} ${symbol}`);
   } catch (e: unknown) {
     const error = e as Error;
 
     if (error instanceof WrongPasswordException) {
-      console.log("Password verification failed");
+      printService.error("Password verification failed");
     } else if (error.message === "Contract not found") {
-      console.log("Contract not found");
+      printService.error("Contract not found");
     } else {
       throw error;
     }
